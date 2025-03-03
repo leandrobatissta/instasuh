@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaSuh</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .feed {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .media-item {
+            margin-bottom: 20px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .media-item img,
+        .media-item video {
+            width: 100%;
+            border-radius: 10px;
+        }
+        .like-comment {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .comment-box {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+        }
+        .comment-box input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-left: 10px;
+        }
+        .like-container {
+            display: flex;
+            align-items: center;
+        }
+        .like {
+            font-size: 30px;
+            cursor: pointer;
+            color: gray;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+        .like.liked {
+            color: red;
+        }
+        .like-count {
+            font-size: 18px;
+            margin-left: 5px;
+        }
+        .comments {
+            width: 90%;
+            text-align: left;
+        }
+        .comment-item {
+            background-color: #f1f1f1;
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>InstaSuh</h1>
+</header>
+<div class="feed" id="feed"></div>
+<script>
+const fotos = Array.from({ length: 28 }, (_, i) => `fotos/suh${String(i + 1).padStart(5, '0')}.jpeg`);
+const videos = Array.from({ length: 13 }, (_, i) => `videos/suh${String(i + 1).padStart(5, '0')}.mp4`);
+let allMedia = [...fotos, ...videos].sort(() => Math.random() - 0.5);
+
+function loadFeed() {
+    const feed = document.getElementById('feed');
+    const mediaSrc = allMedia[Math.floor(Math.random() * allMedia.length)];
+    const mediaElement = document.createElement('div');
+    mediaElement.classList.add('media-item');
+    
+    if (mediaSrc.endsWith('.jpeg')) {
+        const img = document.createElement('img');
+        img.src = mediaSrc;
+        mediaElement.appendChild(img);
+    } else {
+        const video = document.createElement('video');
+        video.src = mediaSrc;
+        video.controls = true;
+        mediaElement.appendChild(video);
+    }
+
+    const likeCommentDiv = document.createElement('div');
+    likeCommentDiv.classList.add('like-comment');
+    
+    const commentBox = document.createElement('div');
+    commentBox.classList.add('comment-box');
+    
+    const likeContainer = document.createElement('div');
+    likeContainer.classList.add('like-container');
+    
+    const likeButton = document.createElement('span');
+    likeButton.classList.add('like');
+    likeButton.innerHTML = '❤️';
+    
+    const likeCount = document.createElement('span');
+    likeCount.classList.add('like-count');
+    
+    const savedLikes = JSON.parse(localStorage.getItem(mediaSrc)) || { likes: 0, comments: [] };
+    likeCount.innerText = savedLikes.likes;
+    if (savedLikes.likes > 0) {
+        likeButton.classList.add('liked');
+    }
+    
+    likeButton.onclick = () => {
+        let count = parseInt(likeCount.innerText);
+        if (likeButton.classList.contains('liked')) {
+            likeButton.classList.remove('liked');
+            likeCount.innerText = count - 1;
+        } else {
+            likeButton.classList.add('liked');
+            likeCount.innerText = count + 1;
+        }
+        savedLikes.likes = parseInt(likeCount.innerText);
+        localStorage.setItem(mediaSrc, JSON.stringify(savedLikes));
+    };
+    
+    likeContainer.appendChild(likeButton);
+    likeContainer.appendChild(likeCount);
+    
+    const commentInput = document.createElement('input');
+    commentInput.type = 'text';
+    commentInput.maxLength = 30;
+    commentInput.placeholder = 'Deixe um comentário...';
+    
+    const commentsDiv = document.createElement('div');
+    commentsDiv.classList.add('comments');
+    
+    savedLikes.comments.forEach(commentText => {
+        const comment = document.createElement('div');
+        comment.classList.add('comment-item');
+        comment.innerText = commentText;
+        commentsDiv.appendChild(comment);
+    });
+    
+    commentInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && commentInput.value.trim()) {
+            const comment = document.createElement('div');
+            comment.classList.add('comment-item');
+            comment.innerText = commentInput.value.trim();
+            commentsDiv.appendChild(comment);
+            savedLikes.comments.push(commentInput.value.trim());
+            localStorage.setItem(mediaSrc, JSON.stringify(savedLikes));
+            commentInput.value = '';
+        }
+    });
+
+    commentBox.appendChild(likeContainer);
+    commentBox.appendChild(commentInput);
+    likeCommentDiv.appendChild(commentBox);
+    likeCommentDiv.appendChild(commentsDiv);
+    mediaElement.appendChild(likeCommentDiv);
+    feed.appendChild(mediaElement);
+}
+setInterval(loadFeed, 2000);
+</script>
+</body>
+</html>
